@@ -160,29 +160,63 @@ foreach ($repo in $responseRepos.value) {
     Write-Host "Repository ${repoNum}: ${repoName} with $($branches.count) $pluralbranch"
 
     foreach ($branch in $branches.value) {
-        $branchName = $branch.name -replace "refs/heads/", ""
-        $commitsUrl = "https://dev.azure.com/$organization/$project/_apis/git/repositories/$repoName/commits?searchCriteria.itemVersion.version=$branchName&searchCriteria.fromDate=$sinceDate&api-version=6.0"
-        # Make the API request to get the commits
-        $commits = Invoke-RestMethod -Uri $commitsUrl -Method Get -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
-        $commitCount = $commits.count
 
-        if ($commitCount -ne 0) {
-            Write-Host "`e[93m   From branch: $branchName`e[0m"
+        # URL to fetch all commits for the branch (no date restriction)
+        $allCommitsUrl = "https://dev.azure.com/$organization/$project/_apis/git/repositories/$repoName/commits?searchCriteria.itemVersion.version=$branchName&api-version=6.0"
 
-            # Display the commits
-            $commits.value | ForEach-Object {
-                $commitId = $_.commitId
-                $author = $_.author.name
-                $authorDate = $_.author.date
-                $comment = $_.comment
+        try {
+            $branchName = $branch.name -replace "refs/heads/", ""
+            $commitsUrl = "https://dev.azure.com/$organization/$project/_apis/git/repositories/$repoName/commits?searchCriteria.itemVersion.version=$branchName&searchCriteria.fromDate=$sinceDate&api-version=6.0"
         
-                Write-Host "`e[36m`tCommit ID: $commitId`e[0m"
-                Write-Host "`e[36m`tAuthor:`e[0m    `e[94m$author`e[0m"
-                Write-Host "`e[36m`tDate:      $authorDate`e[0m"
-                Write-Host "`e[36m`tComment:   $comment`e[0m"
-                Write-Host "`t-----"
-                Write-Host ""
-            }    
+            # Make the API request to get the commits
+            $commits = Invoke-RestMethod -Uri $commitsUrl -Method Get -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
+            $commitCount = $commits.count        
+
+            if ($commitCount -ne 0) {
+                # Get the date for the earliest commit
+                $earliestCommitDate = $commits.value | Sort-Object -Property { $_.author.date } | Select-Object -First 1 #-ExpandProperty author.date
+                
+                # from the commit extract the date of the commit and infer that 
+                # this is the date the branch was created. This is not always 
+                # true, but still a close guess. (A branch can be created with
+                # no commits, but this is rare.)
+                $branchCreationDate = [datetime]$earliestCommitDate.author.date
+                $currentDate = Get-Date
+                $branchOpenDuration = $currentDate - $branchCreationDate
+
+                # Calculate the number of days the branch has been open
+                $daysOpen = if ($branchOpenDuration.TotalDays -lt 1) 
+                { 
+                    1 
+                } else { 
+                    [math]::Ceiling($branchOpenDuration.TotalDays) 
+                }
+
+                write-host "`e[1;33m Created: $branchOpenDuration `e[0m"
+                write-host "`e[1;33m Created: $branchCreationDate `e[0m"
+                write-host "`e[1;33m Current: $currentDate `e[0m"
+                $puralString = if ($daysOpen -eq 1) { "day" } else { "days" }
+                Write-Host "`e[93m   From branch: $branchName`e[0m has been open for $daysOpen $puralString."
+
+                # Display the commits
+                $commits.value | ForEach-Object {
+                    $commitId = $_.commitId
+                    $author = $_.author.name
+                    $authorDate = $_.author.date
+                    $comment = $_.comment
+            
+                    Write-Host "`e[36m`tCommit ID: $commitId`e[0m"
+                    Write-Host "`e[36m`tAuthor:`e[0m    `e[94m$author`e[0m"
+                    Write-Host "`e[36m`tDate:      $authorDate`e[0m"
+                    Write-Host "`e[36m`tComment:   $comment`e[0m"
+                    Write-Host "`t-----"
+                    Write-Host ""
+                }    
+            }
+        }
+        catch {
+            Write-Host "`e[31mError fetching commits: $_`e[0m"
+            throw
         }
     }
 }
