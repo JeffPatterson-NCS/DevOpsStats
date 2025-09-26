@@ -2,7 +2,10 @@
 # This script contains all the custom aliases for the PowerShell profile
 
 # Simplify the path to the PowerShell scripts
-$ScriptLocation = Join-Path $env:USERPROFILE "\Documents\PowerShell\"
+$ScriptLocation = Join-Path $env:OneDrive "Documents\PowerShell"
+
+# When not using OneDrive
+# $ScriptLocation = Join-Path $env:USERPROFILE "\Documents\PowerShell\"
 
 # Display the alias help when the script is loaded
 # Show-AliasHelp
@@ -67,6 +70,7 @@ Set-Alias -Name gpf -Value Get-GitforcePush -Option AllScope
 # Directory Navigation Aliases
 Write-Host "  Startup           -> Startup folder navigation" -ForegroundColor DarkGray
 Set-Alias -Name Startup $ScriptLocation\Get-FolderAutoStartup.ps1 -Option AllScope
+#"C:\Users\JPatterson\OneDrive - National Carwash Solutions, Inc\Documents\PowerShell\Get-FolderAutoStartup.ps1"
 Write-Host "  PSR               -> PSRepo folder navigation" -ForegroundColor DarkGray
 Set-Alias -Name PSR $ScriptLocation\Get-FolderPSRepo.ps1 -Option AllScope
 

@@ -60,7 +60,8 @@ Clear-Host
 # }
 
 # Run the script Search Criteria
-& C:\Users\JPatterson\Documents\PowerShell\Write-SearchCriteria.ps1 -repo "GitLab" -searchDays $days
+# & C:\Users\JPatterson\Documents\PowerShell\Write-SearchCriteria.ps1 -repo "GitLab" -searchDays $days
+& $env:OneDrive\Documents\PowerShell\Write-SearchCriteria.ps1 -repo "GitLab" -searchDays $days
 if($showall) {
     gitlab -verbose -days $days
 } else {

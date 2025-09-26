@@ -1,4 +1,6 @@
 param (
+
+# Default path to the Startup folder
     [string]$Startup = "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
 )
 

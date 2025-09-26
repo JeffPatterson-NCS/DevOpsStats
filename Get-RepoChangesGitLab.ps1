@@ -154,16 +154,20 @@ catch {
 }
 
 
-# Add index to each project before parallelization using PSCustomObject
+# Add index to each project before parallelization using hashtable
 $indexedProjects = @()
-for ($i = 0; $i -lt $allProjects.Length; $i++) {
-    $proj = $allProjects[$i]
-    $indexedProjects += [PSCustomObject]@{
-        name = $proj.name
-        id = $proj.id
-        ProjectIndex = $i + 1
-        TotalProjects = $allProjects.Length
+if ($allProjects -and $allProjects.Length -gt 0) {
+    for ($i = 0; $i -lt $allProjects.Length; $i++) {
+        $proj = $allProjects[$i]
+        $indexedProjects += @{
+            name = $proj.name
+            id = $proj.id
+            ProjectIndex = $i + 1
+            TotalProjects = $allProjects.Length
+        }
     }
+} else {
+    Write-Host "`e[33mWarning: No projects found or allProjects is empty`e[0m"
 }
 
 
@@ -277,7 +281,10 @@ if ($inaccessibleCount -gt 0) {
     $localInaccessible | ForEach-Object { Write-Host " - $($_.name) (ID: $($_.id))" -ForegroundColor Red }
 }
 Write-Host ""
-& $env:USERPROFILE\Documents\PowerShell\Get-RepoCount.ps1 -RepoCount $currentRepoCount -PrevCount $previousRepoCount
+# For OneDrive users - use this path:
+& "$env:OneDrive\Documents\PowerShell\Get-RepoCount.ps1" -RepoCount $currentRepoCount -PrevCount $previousRepoCount
+# For non-OneDrive users - uncomment the line below and comment out the line above:
+# & $env:USERPROFILE\Documents\PowerShell\Get-RepoCount.ps1 -RepoCount $currentRepoCount -PrevCount $previousRepoCount
 Write-Host ""
 Write-Host "`e[1;32mGitLab check complete. ✔️`e[0m"
 Write-Host ""

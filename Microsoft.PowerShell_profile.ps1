@@ -1,3 +1,8 @@
+# When OneDrive for Business was installed. MS moved the Documents folder to 
+# OneDrive. Breaking all my scripts that referenced the old path. The path to 
+#the user alias script needs to be updated.
+
+
 Invoke-Expression (& { (jj util completion power-shell | Out-String) })
 
 # Snippet to test for the current user
@@ -39,14 +44,23 @@ if ($ExecutionContext.SessionState.LanguageMode -ne 'ConstrainedLanguage') {
     # Read-Host
     Clear-Host
 }
-
+# *****************************************************************************
 # Load custom aliases from separate script
-$AliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases.ps1"
+
+# OLD HOME:
+# $AliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases.ps1"
+
+# NEW HOME:
+$AliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases.ps1"
 if (Test-Path $AliasScript) {
     . $AliasScript
 }
 
-$UserAliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
+# OLD HOME:
+#$UserAliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
+
+# NEW HOME:
+$UserAliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
 if (Test-Path $UserAliasScript) {
     . $UserAliasScript
 } else {
