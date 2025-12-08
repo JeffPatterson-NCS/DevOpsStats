@@ -72,19 +72,103 @@ if (Test-Path $UserAliasScript) {
 # Lets do some cool stuff
 # *****************************************************************************
 
-# Custom prompt function to show only the current folder name
-# Only use this if oh-my-posh is not running
-if ($ExecutionContext.SessionState.LanguageMode -eq 'ConstrainedLanguage' -or !(Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-    function prompt {
-        $currentFolder = Split-Path -Leaf -Path (Get-Location)
-        Write-Host "$currentFolder" -NoNewline -ForegroundColor Green
-        Write-Host ">" -NoNewline -ForegroundColor White
-        return " "
-    }
-}
-
 # *****************************************************************************
 #f45873b3-b655-43a6-b217-97c00aa0db58 PowerToys CommandNotFound module
 
 Import-Module -Name Microsoft.WinGet.CommandNotFound
 #f45873b3-b655-43a6-b217-97c00aa0db58
+
+
+function Get-GitBranch {
+    try {
+        $branch = & git rev-parse --abbrev-ref HEAD 2>$null
+        if ($LASTEXITCODE -eq 0) { return $branch }
+    } catch {}
+    return $null
+}
+
+function Get-GitStatus {
+    try {
+        $branch = Get-GitBranch
+        if (-not $branch) { return $null }
+        
+        # Fetch remote updates silently
+        & git fetch 2>$null | Out-Null
+        
+        # Check if remote branch exists
+        $remoteBranch = & git rev-parse --abbrev-ref "@{upstream}" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            return @{ Branch = $branch; Status = 'NoRemote' }
+        }
+        
+        # Get commit counts
+        $ahead = & git rev-list --count "@{upstream}..HEAD" 2>$null
+        $behind = & git rev-list --count "HEAD..@{upstream}" 2>$null
+        
+        # Get uncommitted changes count
+        $statusOutput = & git status --porcelain 2>$null
+        $uncommitted = if ($statusOutput) { ($statusOutput | Measure-Object).Count } else { 0 }
+        
+        if ($ahead -gt 0 -and $behind -gt 0) {
+            $status = 'Diverged'
+        } elseif ($ahead -gt 0) {
+            $status = 'Ahead'
+        } elseif ($behind -gt 0) {
+            $status = 'Behind'
+        } else {
+            $status = 'UpToDate'
+        }
+        
+        return @{ Branch = $branch; Status = $status; Ahead = $ahead; Behind = $behind; Uncommitted = $uncommitted }
+    } catch {
+        return $null
+    }
+}
+
+# Custom prompt function with git status
+# Only use this if oh-my-posh is not running
+if ($ExecutionContext.SessionState.LanguageMode -eq 'ConstrainedLanguage' -or !(Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
+    function prompt {
+        $currentFolder = Split-Path -Leaf -Path (Get-Location)
+        
+        Write-Host $currentFolder -NoNewline -ForegroundColor Cyan
+        
+        $gitStatus = Get-GitStatus
+        if ($gitStatus) {
+            $branchColor = switch ($gitStatus.Status) {
+                'UpToDate' { 'Green' }
+                'Ahead'    { 'Yellow' }
+                'Behind'   { 'Red' }
+                'NoRemote' { 'Gray' }
+                'Diverged' { 'Magenta' }
+                default    { 'White' }
+            }
+            
+            Write-Host " [" -NoNewline -ForegroundColor Cyan
+            Write-Host $gitStatus.Branch -NoNewline -ForegroundColor $branchColor
+            
+            # Show ahead/behind indicators with counts
+            if ($gitStatus.Ahead -gt 0) {
+                Write-Host " ↑$($gitStatus.Ahead)" -NoNewline -ForegroundColor Yellow
+            }
+            if ($gitStatus.Behind -gt 0) {
+                Write-Host " ↓$($gitStatus.Behind)" -NoNewline -ForegroundColor Red
+            }
+            
+            # Show uncommitted changes count
+            if ($gitStatus.Uncommitted -gt 0) {
+                Write-Host " ±$($gitStatus.Uncommitted)" -NoNewline -ForegroundColor DarkYellow
+            }
+            
+            Write-Host "]" -NoNewline -ForegroundColor Cyan
+        }
+        
+        return "> "
+    }
+}
+
+
+# *****************************************************************************
+# End of Profile
+# *****************************************************************************
+
