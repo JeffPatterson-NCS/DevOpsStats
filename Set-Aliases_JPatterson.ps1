@@ -40,12 +40,12 @@ Write-Host "  hmi               -> HMI folder" -ForegroundColor DarkGray
 Set-Alias -Name hmi Get-FolderHmi -Option AllScope
 
 # Neuron Project Navigation
-function Get-FolderNeuronController { & Set-Location $env:Repos\Tunnel\Neuron\NeuronController }
+function Get-FolderNeuronController { & Set-Location $env:Repos\Tunnel\Neuron }
 Write-Host "  nb, neuronb       -> Neuron Controller Blazor application folder" -ForegroundColor DarkGray
 Set-Alias -Name neuronb Get-FolderNeuronController -Option AllScope
 Set-Alias -Name nb Get-FolderNeuronController -Option AllScope
 
-function Get-FolderNeuronIO { & Set-Location $env:Repos\Tunnel\Neuron\io-alpha }
+function Get-FolderNeuronIO { & Set-Location $env:Repos\Tunnel\io-alpha }
 Write-Host "  nio, neuronio     -> Neuron IO folder" -ForegroundColor DarkGray
 Set-Alias -Name neuronio Get-FolderNeuronIO -Option AllScope
 Set-Alias -Name nio Get-FolderNeuronIO -Option AllScope
@@ -70,3 +70,32 @@ function Get-GitPush { & git push github }
 Write-Host "  ghpsh, ghpush     -> git push github" -ForegroundColor DarkGray
 Set-Alias -Name ghpsh Get-GitPush -Option AllScope
 Set-Alias -Name ghpush Get-GitPush -Option AllScope
+
+
+# Special Aliases
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# Resolve the Source root. Prefer the environment variable $env:Source when valid,
+# otherwise fall back to the repository-relative 'source' folder next to this script.
+if ($env:Source -and (Test-Path $env:Source)) {
+    $sourceRoot = $env:Source
+} else {
+    $sourceRoot = Join-Path $scriptDir 'source'
+}
+
+# Target executable inside the Source folder's Workfolder subfolder
+$exePath = Join-Path $sourceRoot 'Workfile\WorkFile.exe'
+
+function WorkFiles {
+    param(
+        [Parameter(ValueFromRemainingArguments=$true)]
+        $Args
+    )
+    if (-not (Test-Path $exePath)) {
+        Write-Warning "WorkFiles executable not found at $exePath"
+        return
+    }
+    & $exePath @Args
+}
+Write-Host "  work              -> Open File Explorer with working directories" -ForegroundColor DarkGray
+Set-Alias -Name work -Value WorkFiles -Option AllScope -Force
