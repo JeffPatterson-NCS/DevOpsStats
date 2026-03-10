@@ -26,7 +26,6 @@
     PS> .\Get-RepoChangesGitLab.ps1 -days 3
     This example will query the GitLab project for changes in the last 3 days.
 
-
 .NOTES
     File Name      : Get-RepoChangesGitLab.ps1
     Author         : Jeff Patterson
@@ -95,6 +94,11 @@ function Write-HostWrapped {
 # Read the access token (AT) from a file that isn't in the Git Repo. That 
 # would be a security problem putting secrets in a repo. PATs should also 
 # be per person and never shared so that there is traceability.
+# Access Token Permissions needed:
+# GitLab Scopes:
+# read_api, read_repository, read_api, ai_features
+
+
 $personalAccessToken = Get-Content -Path $patFilePath -Raw
 
 # Define the file path to save the repo count
