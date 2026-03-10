@@ -47,19 +47,11 @@ if ($ExecutionContext.SessionState.LanguageMode -ne 'ConstrainedLanguage') {
 # *****************************************************************************
 # Load custom aliases from separate script
 
-# OLD HOME:
-# $AliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases.ps1"
-
-# NEW HOME:
 $AliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases.ps1"
 if (Test-Path $AliasScript) {
     . $AliasScript
 }
 
-# OLD HOME:
-#$UserAliasScript = Join-Path $env:USERPROFILE "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
-
-# NEW HOME:
 $UserAliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
 if (Test-Path $UserAliasScript) {
     . $UserAliasScript
