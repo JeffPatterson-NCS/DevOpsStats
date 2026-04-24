@@ -47,12 +47,14 @@ if ($ExecutionContext.SessionState.LanguageMode -ne 'ConstrainedLanguage') {
 # *****************************************************************************
 # Load custom aliases from separate script
 
-$AliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases.ps1"
+$profileScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+$AliasScript = Join-Path $profileScriptDir 'Set-Aliases.ps1'
 if (Test-Path $AliasScript) {
     . $AliasScript
 }
 
-$UserAliasScript = Join-Path $env:OneDrive "\Documents\PowerShell\Set-Aliases_JPatterson.ps1"
+$UserAliasScript = Join-Path $profileScriptDir 'Set-Aliases_JPatterson.ps1'
 if (Test-Path $UserAliasScript) {
     . $UserAliasScript
 } else {
@@ -83,9 +85,6 @@ function Get-GitStatus {
     try {
         $branch = Get-GitBranch
         if (-not $branch) { return $null }
-        
-        # Fetch remote updates silently
-        & git fetch 2>$null | Out-Null
         
         # Check if remote branch exists
         $remoteBranch = & git rev-parse --abbrev-ref "@{upstream}" 2>$null
