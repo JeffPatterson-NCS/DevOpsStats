@@ -2,7 +2,7 @@
 # This script contains all the custom aliases for the PowerShell profile
 
 # Simplify the path to the PowerShell scripts
-$ScriptLocation = Join-Path $env:USERPROFILE "\Documents\PowerShell\"
+$ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Display the alias help when the script is loaded
 # Show-AliasHelp
@@ -83,19 +83,40 @@ if ($env:Source -and (Test-Path $env:Source)) {
     $sourceRoot = Join-Path $scriptDir 'source'
 }
 
-# Target executable inside the Source folder's Workfolder subfolder
-$exePath = Join-Path $sourceRoot 'Workfile\WorkFile.exe'
+# Paths config for neuronwork/work — edit this file to change which folders open
+$workSettingsPath = Join-Path $ScriptLocation 'work-open-paths.json'
 
-function WorkFiles {
-    param(
-        [Parameter(ValueFromRemainingArguments=$true)]
-        $Args
-    )
-    if (-not (Test-Path $exePath)) {
-        Write-Warning "WorkFiles executable not found at $exePath"
+function Invoke-NeuronWork {
+    <#
+    .SYNOPSIS
+        Opens all configured working directories as File Explorer tabs.
+        Requires ExplorerTabUtility (tray app) to be running for tab conversion.
+    #>
+    if (-not (Test-Path $workSettingsPath)) {
+        Write-Warning "Work settings not found at $workSettingsPath"
         return
     }
-    & $exePath @Args
+
+    $settings = Get-Content $workSettingsPath -Raw | ConvertFrom-Json
+    $paths    = $settings.Paths
+    # Hardcoded delay — long enough for ExplorerTabUtility to intercept each window
+    # before the next one opens. Adjust in work-open-paths.json if needed.
+    $delayMs  = 700
+
+    foreach ($path in $paths) {
+        # CLM-safe: use -replace operator (no .NET method calls)
+        $expanded = $path -replace '/', '\'
+        foreach ($envVar in (Get-ChildItem Env:)) {
+            $expanded = $expanded -replace ("%$($envVar.Name)%"), $envVar.Value
+        }
+        if ($expanded -and (Test-Path $expanded -PathType Container)) {
+            & explorer.exe $expanded
+        } else {
+            Write-Warning "Path not found, skipping: $expanded"
+        }
+        Start-Sleep -Milliseconds $delayMs
+    }
 }
-Write-Host "  work              -> Open File Explorer with working directories" -ForegroundColor DarkGray
-Set-Alias -Name work -Value WorkFiles -Option AllScope -Force
+Write-Host "  neuronwork, work  -> Open working directories as Explorer tabs" -ForegroundColor DarkGray
+Set-Alias -Name neuronwork -Value Invoke-NeuronWork -Option AllScope -Force
+Set-Alias -Name work       -Value Invoke-NeuronWork -Option AllScope -Force
