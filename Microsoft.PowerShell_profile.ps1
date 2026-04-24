@@ -3,7 +3,7 @@
 #the user alias script needs to be updated.
 
 
-Invoke-Expression (& { (jj util completion power-shell | Out-String) })
+# Invoke-Expression (& { (jj util completion power-shell | Out-String) })
 
 # Snippet to test for the current user
 if ($env:USERNAME -eq "JPatterson") {
@@ -158,6 +158,20 @@ if ($ExecutionContext.SessionState.LanguageMode -eq 'ConstrainedLanguage' -or !(
         return "> "
     }
 }
+
+
+# *****************************************************************************
+# Do some SSH Stuff
+# *****************************************************************************
+# Ensure ssh-agent is running
+$svc = Get-Service ssh-agent -ErrorAction SilentlyContinue
+if ($svc -and $svc.StartType -ne 'Disabled' -and $svc.Status -ne 'Running') {
+    Start-Service ssh-agent
+}
+
+
+# Add GitHub key if not already loaded
+ssh-add ~/.ssh/github-ncs 2>$null
 
 
 # *****************************************************************************
