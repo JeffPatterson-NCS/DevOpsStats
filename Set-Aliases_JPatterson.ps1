@@ -120,3 +120,33 @@ function Invoke-NeuronWork {
 Write-Host "  neuronwork, work  -> Open working directories as Explorer tabs" -ForegroundColor DarkGray
 Set-Alias -Name neuronwork -Value Invoke-NeuronWork -Option AllScope -Force
 Set-Alias -Name work       -Value Invoke-NeuronWork -Option AllScope -Force
+
+# Wrap claude so a bare `claude` invocation always uses --agent basic (red theme).
+# Capture the real executable path at load time to avoid recursive self-calls.
+$script:_claudeExe = (Get-Command claude -CommandType Application -ErrorAction SilentlyContinue)?.Source
+function claude {
+    if ($script:_claudeExe) {
+        & $script:_claudeExe --agent default @args
+    } else {
+        Write-Error "Claude executable not found in PATH"
+    }
+}
+Write-Host "  Claude            -> claude --agent default (Sonnet 4.6 Medium Effort Red theme)" -ForegroundColor DarkGray
+Write-Host ""
+
+# Claude Code Agent Launchers
+# Resolve the real claude.exe directly (not the `claude` function above) so the
+# --agent value we pass isn't overridden by the bare-invocation default wrapper.
+function Start-Agent86 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent86" --tabColor "#1E88E5" -- $script:_claudeExe --agent 86
+}
+Write-Host "  agent86           -> Launch Claude Code as agent86 in a new blue tab" -ForegroundColor DarkGray
+Set-Alias -Name agent86 -Value Start-Agent86 -Option AllScope -Force
+
+function Start-Agent99 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent99" --tabColor "#FDD835" -- $script:_claudeExe --agent 99
+}
+Write-Host "  agent99           -> Launch Claude Code as agent99 in a new yellow tab" -ForegroundColor DarkGray
+Set-Alias -Name agent99 -Value Start-Agent99 -Option AllScope -Force
