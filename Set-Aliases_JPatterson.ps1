@@ -2,7 +2,7 @@
 # This script contains all the custom aliases for the PowerShell profile
 
 # Simplify the path to the PowerShell scripts
-$ScriptLocation = Join-Path $env:USERPROFILE "\Documents\PowerShell\"
+$ScriptLocation = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Display the alias help when the script is loaded
 # Show-AliasHelp
@@ -83,19 +83,84 @@ if ($env:Source -and (Test-Path $env:Source)) {
     $sourceRoot = Join-Path $scriptDir 'source'
 }
 
-# Target executable inside the Source folder's Workfolder subfolder
-$exePath = Join-Path $sourceRoot 'Workfile\WorkFile.exe'
+# Paths config for neuronwork/work — edit this file to change which folders open
+$workSettingsPath = Join-Path $ScriptLocation 'work-open-paths.json'
 
-function WorkFiles {
-    param(
-        [Parameter(ValueFromRemainingArguments=$true)]
-        $Args
-    )
-    if (-not (Test-Path $exePath)) {
-        Write-Warning "WorkFiles executable not found at $exePath"
+function Invoke-NeuronWork {
+    <#
+    .SYNOPSIS
+        Opens all configured working directories as File Explorer tabs.
+        Requires ExplorerTabUtility (tray app) to be running for tab conversion.
+    #>
+    if (-not (Test-Path $workSettingsPath)) {
+        Write-Warning "Work settings not found at $workSettingsPath"
         return
     }
-    & $exePath @Args
+
+    $settings = Get-Content $workSettingsPath -Raw | ConvertFrom-Json
+    $paths    = $settings.Paths
+    # Hardcoded delay — long enough for ExplorerTabUtility to intercept each window
+    # before the next one opens. Adjust in work-open-paths.json if needed.
+    $delayMs  = 700
+
+    foreach ($path in $paths) {
+        # CLM-safe: use -replace operator (no .NET method calls)
+        $expanded = $path -replace '/', '\'
+        foreach ($envVar in (Get-ChildItem Env:)) {
+            $expanded = $expanded -replace ("%$($envVar.Name)%"), $envVar.Value
+        }
+        if ($expanded -and (Test-Path $expanded -PathType Container)) {
+            & explorer.exe $expanded
+        } else {
+            Write-Warning "Path not found, skipping: $expanded"
+        }
+        Start-Sleep -Milliseconds $delayMs
+    }
 }
-Write-Host "  work              -> Open File Explorer with working directories" -ForegroundColor DarkGray
-Set-Alias -Name work -Value WorkFiles -Option AllScope -Force
+Write-Host "  neuronwork, work  -> Open working directories as Explorer tabs" -ForegroundColor DarkGray
+Set-Alias -Name neuronwork -Value Invoke-NeuronWork -Option AllScope -Force
+Set-Alias -Name work       -Value Invoke-NeuronWork -Option AllScope -Force
+
+# Wrap claude so a bare `claude` invocation always uses --agent basic (red theme).
+# Capture the real executable path at load time to avoid recursive self-calls.
+$script:_claudeExe = (Get-Command claude -CommandType Application -ErrorAction SilentlyContinue)?.Source
+function claude {
+    if ($script:_claudeExe) {
+        & $script:_claudeExe --agent default @args
+    } else {
+        Write-Error "Claude executable not found in PATH"
+    }
+}
+Write-Host "  Claude            -> claude --agent default (Sonnet 4.6 Medium Effort Red theme)" -ForegroundColor DarkGray
+Write-Host ""
+
+# Claude Code Agent Launchers
+# Resolve the real claude.exe directly (not the `claude` function above) so the
+# --agent value we pass isn't overridden by the bare-invocation default wrapper.
+function Start-Agent86 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent86 - Maxwell Smart" --tabColor "#1E88E5" --suppressApplicationTitle -- $script:_claudeExe --agent 86
+}
+Write-Host "  agent86           -> Agent 86 (S Carell)  — Opus 4.8 1M, High effort, blue tab" -ForegroundColor DarkGray
+Set-Alias -Name agent86 -Value Start-Agent86 -Option AllScope -Force
+
+function Start-Agent99 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent99 - Agent 99" --tabColor "#FDD835" --suppressApplicationTitle -- $script:_claudeExe --agent 99
+}
+Write-Host "  agent99           -> Agent 99 (A Hathaway) — Sonnet 5, High effort, yellow tab" -ForegroundColor DarkGray
+Set-Alias -Name agent99 -Value Start-Agent99 -Option AllScope -Force
+
+function Start-Agent13 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent13 - Agent 13" --tabColor "#000000" --suppressApplicationTitle -- $script:_claudeExe --agent 13
+}
+Write-Host "  agent13           -> Agent 13 (B Murray)   — Fable, High effort, black tab" -ForegroundColor DarkGray
+Set-Alias -Name agent13 -Value Start-Agent13 -Option AllScope -Force
+
+function Start-Agent23 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent23 - Agent 23" --tabColor "#00897B" --suppressApplicationTitle -- $script:_claudeExe --agent 23
+}
+Write-Host "  agent23           -> Agent 23 (D Johnson)  — Sonnet 5, Medium effort, blue-green tab" -ForegroundColor DarkGray
+Set-Alias -Name agent23 -Value Start-Agent23 -Option AllScope -Force
