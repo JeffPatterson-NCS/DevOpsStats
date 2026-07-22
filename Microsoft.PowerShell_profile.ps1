@@ -85,7 +85,7 @@ function Get-GitStatus {
     try {
         $branch = Get-GitBranch
         if (-not $branch) { return $null }
-        
+
         # Check if remote branch exists
         $remoteBranch = & git rev-parse --abbrev-ref "@{upstream}" 2>$null
         if ($LASTEXITCODE -ne 0) {
