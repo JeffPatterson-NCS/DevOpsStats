@@ -139,14 +139,28 @@ Write-Host ""
 # --agent value we pass isn't overridden by the bare-invocation default wrapper.
 function Start-Agent86 {
     if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent86" --tabColor "#1E88E5" -- $script:_claudeExe --agent 86
+    & wt --title "agent86 - Maxwell Smart" --tabColor "#1E88E5" --suppressApplicationTitle -- $script:_claudeExe --agent 86
 }
-Write-Host "  agent86           -> Launch Claude Code as agent86 in a new blue tab" -ForegroundColor DarkGray
+Write-Host "  agent86           -> Agent 86 (S Carell)  — Opus 4.8 1M, High effort, blue tab" -ForegroundColor DarkGray
 Set-Alias -Name agent86 -Value Start-Agent86 -Option AllScope -Force
 
 function Start-Agent99 {
     if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent99" --tabColor "#FDD835" -- $script:_claudeExe --agent 99
+    & wt --title "agent99 - Agent 99" --tabColor "#FDD835" --suppressApplicationTitle -- $script:_claudeExe --agent 99
 }
-Write-Host "  agent99           -> Launch Claude Code as agent99 in a new yellow tab" -ForegroundColor DarkGray
+Write-Host "  agent99           -> Agent 99 (A Hathaway) — Sonnet 5, High effort, yellow tab" -ForegroundColor DarkGray
 Set-Alias -Name agent99 -Value Start-Agent99 -Option AllScope -Force
+
+function Start-Agent13 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent13 - Agent 13" --tabColor "#000000" --suppressApplicationTitle -- $script:_claudeExe --agent 13
+}
+Write-Host "  agent13           -> Agent 13 (B Murray)   — Fable, High effort, black tab" -ForegroundColor DarkGray
+Set-Alias -Name agent13 -Value Start-Agent13 -Option AllScope -Force
+
+function Start-Agent23 {
+    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
+    & wt --title "agent23 - Agent 23" --tabColor "#00897B" --suppressApplicationTitle -- $script:_claudeExe --agent 23
+}
+Write-Host "  agent23           -> Agent 23 (D Johnson)  — Sonnet 5, Medium effort, blue-green tab" -ForegroundColor DarkGray
+Set-Alias -Name agent23 -Value Start-Agent23 -Option AllScope -Force
