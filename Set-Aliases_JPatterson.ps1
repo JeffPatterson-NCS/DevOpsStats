@@ -137,30 +137,58 @@ Write-Host ""
 # Claude Code Agent Launchers
 # Resolve the real claude.exe directly (not the `claude` function above) so the
 # --agent value we pass isn't overridden by the bare-invocation default wrapper.
-function Start-Agent86 {
+function Start-ClaudeAgentTab {
+    <#
+    .SYNOPSIS
+        Opens a Windows Terminal tab running Claude Code under the given agent.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Title,
+        [Parameter(Mandatory)][string]$TabColor,
+        [Parameter(Mandatory)][string]$Scheme,
+        [Parameter(Mandatory)][string]$Agent
+    )
+
     if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent86 - Maxwell Smart" --tabColor "#1E88E5" --suppressApplicationTitle -- $script:_claudeExe --agent 86
+
+    # Claude Code only runs the configured statusLine when it has a shell parent. Handing wt the
+    # bare claude.exe makes it a direct child of wt.exe and the status bar never renders, so go
+    # through pwsh instead. -NoProfile keeps the alias banner out of the new tab.
+    # wt also ignores the caller's location and uses the profile's startingDirectory, so pass -d.
+    # --permission-mode is passed explicitly so the tab starts in acceptEdits regardless of how the
+    # agent frontmatter and the global defaultMode happen to resolve.
+    $wtArgs = @(
+        '--title', $Title,
+        '--tabColor', $TabColor,
+        '--colorScheme', $Scheme,
+        '--suppressApplicationTitle',
+        '-d', "$PWD",
+        '--',
+        'pwsh', '-NoLogo', '-NoProfile', '-Command', "Remove-Item Env:\CLAUDE_CODE_CHILD_SESSION -ErrorAction SilentlyContinue; & '$script:_claudeExe' --agent $Agent --permission-mode acceptEdits"
+    )
+    & wt @wtArgs
 }
-Write-Host "  agent86           -> Agent 86 (S Carell)  — Opus 4.8 1M, High effort, blue tab" -ForegroundColor DarkGray
+
+function Start-Agent86 {
+    Start-ClaudeAgentTab -Title "Agent 86 - Neuron" -TabColor "#282C34" -Scheme "JeffPatterson.dev - Agent86" -Agent 86
+}
+Write-Host "  agent86           -> Agent 86 (Neuron)     — Opus 4.8 1M, High effort, dark tab" -ForegroundColor DarkGray
 Set-Alias -Name agent86 -Value Start-Agent86 -Option AllScope -Force
 
 function Start-Agent99 {
-    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent99 - Agent 99" --tabColor "#FDD835" --suppressApplicationTitle -- $script:_claudeExe --agent 99
+    Start-ClaudeAgentTab -Title "Agent 99 - Review" -TabColor "#300A24" -Scheme "JeffPatterson.dev - Agent99" -Agent 99
 }
-Write-Host "  agent99           -> Agent 99 (A Hathaway) — Sonnet 5, High effort, yellow tab" -ForegroundColor DarkGray
+Write-Host "  agent99           -> Agent 99 (Review)     — Sonnet 5, High effort, maroon tab" -ForegroundColor DarkGray
 Set-Alias -Name agent99 -Value Start-Agent99 -Option AllScope -Force
 
 function Start-Agent13 {
-    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent13 - Agent 13" --tabColor "#000000" --suppressApplicationTitle -- $script:_claudeExe --agent 13
+    Start-ClaudeAgentTab -Title "agent13 - Agent 13" -TabColor "#000000" -Scheme "JeffPatterson.dev - Agent13" -Agent 13
 }
 Write-Host "  agent13           -> Agent 13 (B Murray)   — Fable, High effort, black tab" -ForegroundColor DarkGray
 Set-Alias -Name agent13 -Value Start-Agent13 -Option AllScope -Force
 
 function Start-Agent23 {
-    if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-    & wt --title "agent23 - Agent 23" --tabColor "#00897B" --suppressApplicationTitle -- $script:_claudeExe --agent 23
+    Start-ClaudeAgentTab -Title "Agent 23 - AI" -TabColor "#00897B" -Scheme "JeffPatterson.dev - Agent23" -Agent 23
 }
-Write-Host "  agent23           -> Agent 23 (D Johnson)  — Sonnet 5, Medium effort, blue-green tab" -ForegroundColor DarkGray
+Write-Host "  agent23           -> Agent 23 (AI)         — Sonnet 5, Medium effort, teal tab" -ForegroundColor DarkGray
 Set-Alias -Name agent23 -Value Start-Agent23 -Option AllScope -Force
