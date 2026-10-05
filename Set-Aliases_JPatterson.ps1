@@ -131,60 +131,32 @@ function claude {
         Write-Error "Claude executable not found in PATH"
     }
 }
-Write-Host "  Claude            -> claude --agent default (Opus latest, High effort, red theme)" -ForegroundColor DarkGray
+Write-Host "  Claude            -> claude --agent default (Opus latest, High effort)" -ForegroundColor DarkGray
 Write-Host ""
 
 # Claude Code Agent Launchers
-# Resolve the real claude.exe directly (not the `claude` function above) so the
-# --agent value we pass isn't overridden by the bare-invocation default wrapper.
-function Start-ClaudeAgentTab {
-    <#
-    .SYNOPSIS
-        Opens a Windows Terminal tab running Claude Code under the given agent.
-    #>
-    param(
-        [Parameter(Mandatory)][string]$Title,
-        [Parameter(Mandatory)][string]$Agent
-    )
+# Model and effort come from each agent's frontmatter in ~/.claude/agents. Call claude.exe directly (not the `claude`
+# function above) so the --agent value isn't overridden by the bare-invocation default wrapper. --permission-mode is
+# passed explicitly so the session starts in acceptEdits regardless of how the frontmatter and defaultMode resolve.
+function Start-ClaudeAgent {
+    param([Parameter(Mandatory)][string]$Agent)
 
     if (-not $script:_claudeExe) { Write-Error "Claude executable not found in PATH"; return }
-
-    # Claude Code only runs the configured statusLine when it has a shell parent. Handing wt the
-    # bare claude.exe makes it a direct child of wt.exe and the status bar never renders, so go
-    # through pwsh instead. -NoProfile keeps the alias banner out of the new tab.
-    # wt also ignores the caller's location and uses the profile's startingDirectory, so pass -d.
-    # --permission-mode is passed explicitly so the tab starts in acceptEdits regardless of how the
-    # agent frontmatter and the global defaultMode happen to resolve.
-    $wtArgs = @(
-        '--title', $Title,
-        '--suppressApplicationTitle',
-        '-d', "$PWD",
-        '--',
-        'pwsh', '-NoLogo', '-NoProfile', '-Command', "Remove-Item Env:\CLAUDE_CODE_CHILD_SESSION -ErrorAction SilentlyContinue; & '$script:_claudeExe' --agent $Agent --permission-mode acceptEdits"
-    )
-    & wt @wtArgs
+    & $script:_claudeExe --agent $Agent --permission-mode acceptEdits
 }
 
-function Start-Agent86 {
-    Start-ClaudeAgentTab -Title "Agent 86 - Neuron" -Agent 86
-}
+function Start-Agent86 { Start-ClaudeAgent -Agent 86 }
 Write-Host "  agent86           -> Agent 86 (Neuron)     — Opus latest, Medium effort" -ForegroundColor DarkGray
 Set-Alias -Name agent86 -Value Start-Agent86 -Option AllScope -Force
 
-function Start-Agent99 {
-    Start-ClaudeAgentTab -Title "Agent 99 - Review" -Agent 99
-}
+function Start-Agent99 { Start-ClaudeAgent -Agent 99 }
 Write-Host "  agent99           -> Agent 99 (Review)     — Sonnet latest, Medium effort" -ForegroundColor DarkGray
 Set-Alias -Name agent99 -Value Start-Agent99 -Option AllScope -Force
 
-function Start-Agent13 {
-    Start-ClaudeAgentTab -Title "agent13 - Agent 13" -Agent 13
-}
+function Start-Agent13 { Start-ClaudeAgent -Agent 13 }
 Write-Host "  agent13           -> Agent 13 (B Murray)   — Fable latest, XHigh effort" -ForegroundColor DarkGray
 Set-Alias -Name agent13 -Value Start-Agent13 -Option AllScope -Force
 
-function Start-Agent23 {
-    Start-ClaudeAgentTab -Title "Agent 23 - AI" -Agent 23
-}
+function Start-Agent23 { Start-ClaudeAgent -Agent 23 }
 Write-Host "  agent23           -> Agent 23 (AI)         — Sonnet latest, High effort" -ForegroundColor DarkGray
 Set-Alias -Name agent23 -Value Start-Agent23 -Option AllScope -Force
