@@ -131,7 +131,7 @@ function claude {
         Write-Error "Claude executable not found in PATH"
     }
 }
-Write-Host "  Claude            -> claude --agent default (Sonnet 4.6 Medium Effort Red theme)" -ForegroundColor DarkGray
+Write-Host "  Claude            -> claude --agent default (Opus latest, High effort, red theme)" -ForegroundColor DarkGray
 Write-Host ""
 
 # Claude Code Agent Launchers
